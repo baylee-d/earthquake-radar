@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            Earthquake Radar
+        </title>
+
+        <!-- CSS Styles -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <link rel='stylesheet' href='app.css'>
+
+        <!-- Mapbox CDN -->
+        <script src='https://api.mapbox.com/mapbox-gl-js/v1.11.1/mapbox-gl.js'></script>
+        <link href='https://api.mapbox.com/mapbox-gl-js/v1.11.1/mapbox-gl.css' rel='stylesheet' />
+        <script src="https://kit.fontawesome.com/70b80ef710.js" crossorigin="anonymous"></script>
+    </head>
+    <body onload='loadMap()'>
+        <div id='sideFilter'>
+            <button type='button' class='iconButton' onclick='closeFilter()'>&times;</button>
+            <form id='filterForm'>
+                <fieldset>
+                    <legend>Magnitude</legend>
+                    <div class="form-group">
+                        <label for="minmagnitude">Min</label>
+                        <select class="form-control" id="minmagnitude">
+                            <option selected>none</option>
+                            <option>1.0</option>
+                            <option>1.9</option>
+                            <option>2.0</option>
+                            <option>2.9</option>
+                            <option>3.0</option>
+                            <option>3.9</option>
+                            <option>4.0</option>
+                            <option>4.9</option>
+                            <option>5.0</option>
+                            <option>5.9</option>
+                            <option>6.0</option>
+                            <option>6.9</option>
+                            <option>7.0</option>
+                            <option>7.9</option>
+                            <option>8.0</option>
+                            <option>8.9</option>
+                            <option>9.0+</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="maxmagnitude">Max</label>
+                        <select class="form-control" id="maxmagnitude">
+                            <option selected>none</option>
+                            <option>1.0</option>
+                            <option>1.9</option>
+                            <option>2.0</option>
+                            <option>2.9</option>
+                            <option>3.0</option>
+                            <option>3.9</option>
+                            <option>4.0</option>
+                            <option>4.9</option>
+                            <option>5.0</option>
+                            <option>5.9</option>
+                            <option>6.0</option>
+                            <option>6.9</option>
+                            <option>7.0</option>
+                            <option>7.9</option>
+                            <option>8.0</option>
+                            <option>8.9</option>
+                            <option>9.0+</option>
+                        </select>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>Alert Level</legend>
+                    <div class='form-check'>
+                        <input class='form-check-input' type='radio' name='alertlevel' id='alertNone' value='none' checked>
+                        <label class='form-check-label' for='alertNone'>
+                            None
+                        </label>
+                    </div>
+                    <div class='form-check'>
+                        <input class='form-check-input' type='radio' name='alertlevel' id='alertGreen' value='green'>
+                        <label class='form-check-label' for='alertGreen'>
+                            Level Green
+                        </label>
+                    </div>
+                    <div class='form-check'>
+                        <input class='form-check-input' type='radio' name='alertlevel' id='alertYellow' value='yellow'>
+                        <label class='form-check-label' for='alertYellow'>
+                            Level Yellow
+                        </label>
+                    </div>
+                    <div class='form-check'>
+                        <input class='form-check-input' type='radio' name='alertlevel' id='alertOrange' value='orange'>
+                        <label class='form-check-label' for='alertOrange'>
+                            Level Orange
+                        </label>
+                    </div>
+                    <div class='form-check'>
+                        <input class='form-check-input' type='radio' name='alertlevel' id='alertRed' value='red'>
+                        <label class='form-check-label' for='alertRed'>
+                            Level Red
+                        </label>
+                    </div>
+                </fieldset>
+                <button type='button' class='submitButton btn btn-success' onclick='loadMap()'>Search</button>
+            </form>
+        </div>
+        <div id='buttonContainer'>
+            <button type='button' class='iconButton' data-toggle='modal' data-target='#informationModal'><i class='fas fa-info-circle'></i></button>
+            <button class='iconButton' onclick='openFilter()'><i class='fas fa-filter'></i></button>
+        </div>
+        <div class="loader loader--style3" id='loadingIcon' title="loading-icon">
+            <svg version="1.1" id="loader-1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+               width="100px" height="100px" viewBox="0 0 50 50" style="enable-background:new 0 0 50 50;" xml:space="preserve">
+            <path fill="#000" d="M43.935,25.145c0-10.318-8.364-18.683-18.683-18.683c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615c8.072,0,14.615,6.543,14.615,14.615H43.935z">
+              <animateTransform attributeType="xml"
+                attributeName="transform"
+                type="rotate"
+                from="0 25 25"
+                to="360 25 25"
+                dur="0.6s"
+                repeatCount="indefinite"/>
+              </path>
+            </svg>
+          </div>
+
+        <div id='earthquakeMap'></div>
+
+        <div class='modal fade' id='informationModal' tabindex='-1' role='dialog'>
+            <div class='modal-dialog' role='document'>
+              <div class='modal-content'>
+                <div class='modal-header'>
+                  <h5 class='modal-title'>Welcome to Earthquake Radar!</h5>
+                  <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
+                    <span aria-hidden='true'>&times;</span>
+                  </button>
+                </div>
+                <div class='modal-body'>
+                  <p>
+                      Earthquake Radar uses the <a href='https://earthquake.usgs.gov/fdsnws/event/1/#callback'>USGS Earthquake Hazards Program</a> to show all earthquakes around the world within the last 30 days.
+                  </p>
+                  <p>
+                      You can filter it by magnitude and alert level.
+                  </p>
+                </div>
+                <div class='modal-footer'>
+                  <button type='button' class='btn btn-secondary' data-dismiss='modal'>Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        <script src='app.js'></script>
+        
+        <!-- Bootstrap things -->
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+        
+        <!-- Firebase things -->
+        <script src="/__/firebase/7.17.2/firebase-app.js"></script>
+        <script src="/__/firebase/init.js"></script>
+    </body>
+</html>
